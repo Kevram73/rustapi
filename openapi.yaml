@@ -1,0 +1,426 @@
+openapi: 3.0.3
+info:
+  title: Rust API - Gestion de Tâches
+  description: |
+    API REST générique en Rust avec gestion de tâches.
+    
+    Cette API fournit un système complet de gestion de tâches avec toutes les opérations CRUD.
+    
+    ## Authentification
+    
+    Cette API utilise JWT (JSON Web Tokens) pour l'authentification. 
+    Les tokens doivent être inclus dans l'en-tête `Authorization` sous la forme :
+    ```
+    Authorization: Bearer <token>
+    ```
+    
+  version: 1.0.0
+  contact:
+    name: Support API
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Serveur de développement local
+  - url: https://api.example.com/api
+    description: Serveur de production
+
+tags:
+  - name: Health
+    description: Endpoints de santé et statut
+  - name: Tasks
+    description: Gestion des tâches (CRUD)
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Vérification de santé
+      description: Retourne le statut de l'API et un timestamp
+      operationId: healthCheck
+      responses:
+        '200':
+          description: API opérationnelle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                success: true
+                data:
+                  status: ok
+                  timestamp: "2024-01-01T12:00:00Z"
+
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: Lister les tâches
+      description: |
+        Récupère la liste de toutes les tâches avec pagination optionnelle.
+        
+        Les paramètres de pagination sont optionnels :
+        - `page` : Numéro de page (défaut : 1)
+        - `limit` : Nombre d'éléments par page (défaut : 20)
+      operationId: getTasks
+      parameters:
+        - name: page
+          in: query
+          description: Numéro de page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Nombre d'éléments par page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Liste des tâches récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasksResponse'
+              example:
+                success: true
+                data:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    title: "Faire les courses"
+                    description: "Acheter du lait et du pain"
+                    completed: false
+                    created_at: "2024-01-01T12:00:00Z"
+                    updated_at: "2024-01-01T12:00:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Tasks
+      summary: Créer une tâche
+      description: Crée une nouvelle tâche
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: "Nouvelle tâche"
+              description: "Description de la tâche"
+      responses:
+        '200':
+          description: Tâche créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                success: true
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  title: "Nouvelle tâche"
+                  description: "Description de la tâche"
+                  completed: false
+                  created_at: "2024-01-01T12:00:00Z"
+                  updated_at: "2024-01-01T12:00:00Z"
+                message: "Tâche créée avec succès"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /tasks/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Récupérer une tâche
+      description: Récupère les détails d'une tâche par son ID
+      operationId: getTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID de la tâche
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Tâche trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Tasks
+      summary: Mettre à jour une tâche
+      description: |
+        Met à jour une tâche existante. Tous les champs sont optionnels.
+        Seuls les champs fournis seront mis à jour.
+      operationId: updateTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID de la tâche
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+            example:
+              title: "Titre modifié"
+              completed: true
+      responses:
+        '200':
+          description: Tâche mise à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                success: true
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  title: "Titre modifié"
+                  description: "Description de la tâche"
+                  completed: true
+                  created_at: "2024-01-01T12:00:00Z"
+                  updated_at: "2024-01-01T12:05:00Z"
+                message: "Tâche mise à jour avec succès"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Supprimer une tâche
+      description: Supprime une tâche par son ID
+      operationId: deleteTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID de la tâche
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tâche supprimée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                data: null
+                message: "Tâche supprimée avec succès"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identifiant unique de la tâche
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          maxLength: 200
+          description: Titre de la tâche
+          example: "Faire les courses"
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: Description optionnelle de la tâche
+          example: "Acheter du lait et du pain"
+        completed:
+          type: boolean
+          description: Statut de complétion de la tâche
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Date de création
+          example: "2024-01-01T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Date de dernière mise à jour
+          example: "2024-01-01T12:00:00Z"
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Titre de la tâche
+          example: "Nouvelle tâche"
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: Description optionnelle
+          example: "Description de la tâche"
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Nouveau titre (optionnel)
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: Nouvelle description (optionnel)
+        completed:
+          type: boolean
+          description: Nouveau statut de complétion (optionnel)
+
+    TaskResponse:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+
+    TasksResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/TaskResponse'
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+
+    ApiResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Indique si la requête a réussi
+        data:
+          description: Données de la réponse (peut être null)
+        message:
+          type: string
+          nullable: true
+          description: Message optionnel
+
+    SuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              nullable: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - status
+      properties:
+        error:
+          type: string
+          description: Message d'erreur
+          example: "Ressource non trouvée"
+        status:
+          type: integer
+          description: Code HTTP de l'erreur
+          example: 404
+
+  responses:
+    BadRequest:
+      description: Requête invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Erreur de validation: title: length"
+            status: 400
+
+    NotFound:
+      description: Ressource non trouvée
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Ressource non trouvée: Tâche avec l'id 123e4567-e89b-12d3-a456-426614174000 non trouvée"
+            status: 404
+
+    InternalServerError:
+      description: Erreur interne du serveur
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Une erreur interne s'est produite"
+            status: 500
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtenu via l'endpoint d'authentification
+
+security:
+  - BearerAuth: []
+

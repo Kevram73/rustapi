@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rustapi_postgres
+    environment:
+      POSTGRES_USER: rustapi
+      POSTGRES_PASSWORD: rustapi_password
+      POSTGRES_DB: rustapi
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rustapi -d rustapi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rustapi_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rustapi_app
+    environment:
+      DATABASE_URL: postgres://rustapi:rustapi_password@postgres:5432/rustapi
+      JWT_SECRET: your-secret-key-change-in-production
+      JWT_EXPIRATION: 3600
+      API_VERSION: v1
+      LOG_LEVEL: info
+      PORT: 3004
+      HOST: 0.0.0.0
+      RUST_LOG: rustapi=info,tower_http=info
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rustapi_network
+    restart: unless-stopped
+    command: ["/app/rustapi"]
+
+volumes:
+  postgres_data:
+
+networks:
+  rustapi_network:
+    driver: bridge

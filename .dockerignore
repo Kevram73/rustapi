@@ -1,0 +1,16 @@
+target/
+.git/
+.gitignore
+.env
+.env.local
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+README.md
+docs/
+

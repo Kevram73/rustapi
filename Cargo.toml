@@ -1,0 +1,39 @@
+[package]
+name = "rustapi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+rocket = { version = "0.5", features = ["json"] }
+rocket_dyn_templates = { version = "0.1", features = ["handlebars"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "mysql", "sqlite", "chrono", "uuid"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Authentication & Security
+jsonwebtoken = "9.0"
+bcrypt = "0.15"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"], default-features = false }
+
+# Configuration - chargement manuel du .env
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
+# HTTP client (pour les appels externes) - optionnel
+# reqwest = { version = "0.11", features = ["json"] }
+
